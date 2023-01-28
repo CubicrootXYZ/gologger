@@ -31,7 +31,8 @@ const (
 )
 
 type logger struct {
-	zap *zap.Logger
+	zap    *zap.Logger
+	fields map[string]any
 }
 
 // New assembles a new logger with the given log level.
@@ -51,7 +52,8 @@ func New(loglevel LogLevel, skipCallers int) Logger {
 	atom.SetLevel(logLevelToZap(loglevel))
 
 	return &logger{
-		zap: zapLogger,
+		zap:    zapLogger,
+		fields: make(map[string]any),
 	}
 }
 
@@ -73,31 +75,46 @@ func (l *logger) Flush() error {
 }
 
 func (l *logger) Debugf(format string, args ...any) {
-	l.zap.Debug(stringify(format, args...))
+	l.zap.With(map2fields(l.fields)...).Debug(stringify(format, args...))
 }
 
 func (l *logger) Infof(format string, args ...any) {
-	l.zap.Info(stringify(format, args...))
+	l.zap.With(map2fields(l.fields)...).Info(stringify(format, args...))
 }
 
 func (l *logger) Errorf(format string, args ...any) {
-	l.zap.Error(stringify(format, args...))
+	l.zap.With(map2fields(l.fields)...).Error(stringify(format, args...))
 }
 
 func (l *logger) Err(err error) {
-	l.zap.Error(err.Error())
+	l.zap.With(map2fields(l.fields)...).Error(err.Error())
 }
 
 func (l *logger) WithField(name string, value any) Logger {
-	newLogger := *l
-	newLogger.zap = l.zap.With(map2fields(map[string]any{name: value})...)
+	newLogger := l.copy()
+	newLogger.fields[name] = value
 
-	return &newLogger
+	return newLogger
 }
 
 func (l *logger) WithFields(fields map[string]any) Logger {
-	newLogger := *l
-	newLogger.zap = l.zap.With(map2fields(fields)...)
+	newLogger := l.copy()
+	for key, value := range fields {
+		newLogger.fields[key] = value
+	}
+
+	return newLogger
+}
+
+func (l *logger) copy() *logger {
+	newLogger := logger{
+		zap:    l.zap,
+		fields: make(map[string]any),
+	}
+
+	for key, value := range l.fields {
+		newLogger.fields[key] = value
+	}
 
 	return &newLogger
 }
