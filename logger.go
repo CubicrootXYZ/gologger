@@ -48,7 +48,8 @@ func New(loglevel LogLevel, skipCallers int) Logger {
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stdout),
 		atom,
-	), zap.AddCallerSkip(1+skipCallers))
+	), zap.AddCallerSkip(1+skipCallers),
+		zap.AddCaller())
 	atom.SetLevel(logLevelToZap(loglevel))
 
 	return &logger{
