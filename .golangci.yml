@@ -42,6 +42,7 @@ linters:
     - sqlclosecheck
     - structcheck
     - wastedassign
+    - depguard # Blocks my own libs :(
 
 linters-settings:
   cyclop:
