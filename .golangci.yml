@@ -1,3 +1,7 @@
+run:
+  skip-dirs:
+    - ../../../usr/local/go/src
+
 linters:
   enable-all: true
   disable: 
